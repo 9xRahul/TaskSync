@@ -32,9 +32,15 @@ exports.getTasks = async (req, res) => {
 // Update task
 exports.updateTask = async (req, res) => {
   try {
-    console.log("Updating task for user:");
-    console.log(req.user);
     const { id } = req.params;
+    const task = await Task.findById(id);
+
+    if (task.owner != req.user.id) {
+      return res
+        .status(401)
+        .json({ success: false, error: "You canot update this task" });
+    }
+
     const updatedTask = await Task.findByIdAndUpdate(id, req.body, {
       new: true,
       runValidators: true,
@@ -56,6 +62,14 @@ exports.deleteTask = async (req, res) => {
     const { id } = req.params;
 
     console.log(req.user);
+
+    const task = await Task.findById(id);
+
+    if (task.owner != req.user.id) {
+      return res
+        .status(401)
+        .json({ success: false, error: "You canot update this task" });
+    }
 
     const deletedTask = await Task.findByIdAndDelete(id);
 
