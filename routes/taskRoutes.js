@@ -10,6 +10,7 @@ const {
   getTasks,
   updateTask,
   deleteTask,
+  getTaskById,
 } = require("../controllers/taskController");
 const { authMiddleware } = require("../middlewares/Auth");
 
@@ -25,7 +26,6 @@ router.get("/gettasks", getTasks);
 router.put(
   "/update/:id",
   [
-    authMiddleware,
     validateMongoIdParam(),
     validateTaskTitle(),
     validateTaskStatus(),
@@ -33,10 +33,7 @@ router.put(
   ],
   updateTask
 );
-router.delete(
-  "/delete/:id",
-  [authMiddleware, validateMongoIdParam()],
-  deleteTask
-);
+router.delete("/delete/:id", [validateMongoIdParam()], deleteTask);
+router.get("/gettask/:id", validateMongoIdParam(), getTaskById);
 
 module.exports = router;
