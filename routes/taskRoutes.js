@@ -25,6 +25,7 @@ router.get("/gettasks", getTasks);
 router.put(
   "/update/:id",
   [
+    authMiddleware,
     validateMongoIdParam(),
     validateTaskTitle(),
     validateTaskStatus(),
@@ -32,6 +33,10 @@ router.put(
   ],
   updateTask
 );
-router.delete("/delete/:id", [validateMongoIdParam()], deleteTask);
+router.delete(
+  "/delete/:id",
+  [authMiddleware, validateMongoIdParam()],
+  deleteTask
+);
 
 module.exports = router;

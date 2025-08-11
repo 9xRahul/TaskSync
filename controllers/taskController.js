@@ -32,6 +32,8 @@ exports.getTasks = async (req, res) => {
 // Update task
 exports.updateTask = async (req, res) => {
   try {
+    console.log("Updating task for user:");
+    console.log(req.user);
     const { id } = req.params;
     const updatedTask = await Task.findByIdAndUpdate(id, req.body, {
       new: true,
@@ -52,6 +54,9 @@ exports.updateTask = async (req, res) => {
 exports.deleteTask = async (req, res) => {
   try {
     const { id } = req.params;
+
+    console.log(req.user);
+
     const deletedTask = await Task.findByIdAndDelete(id);
 
     if (!deletedTask) {
