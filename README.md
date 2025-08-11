@@ -166,7 +166,7 @@ Authorization: Bearer <ACCESS_TOKEN>
 ---
 
 ### 3. **Get Single Task**
-`GET /tasks/get/:id`
+`GET /tasks/gettask/:id`
 
 ---
 
