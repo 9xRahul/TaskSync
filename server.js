@@ -5,6 +5,7 @@ const dotenv = require("dotenv");
 const connectDB = require("./config/db");
 const helmet = require("helmet");
 const cookieParser = require("cookie-parser");
+const rateLimit = require("express-rate-limit");
 
 connectDB();
 
@@ -12,6 +13,15 @@ const authRoutes = require("./routes/authRoutes");
 const taskRoutes = require("./routes/taskRoutes");
 
 const app = express();
+
+app.set("trust proxy", 1); // 1 means trust the first proxy
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+});
+
+app.use(limiter);
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
