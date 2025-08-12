@@ -6,7 +6,7 @@ const {
   generateAccessToken,
   createRefreshToken,
   generateRandomToken,
-} = require("../utils/tokens");
+} = require("../utils/Token");
 const { sendEmail } = require("../utils/email");
 
 // Helpers to set refresh cookie
@@ -149,7 +149,12 @@ exports.login = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: { id: user._id, name: user.name, email: user.email },
+      data: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        isVerified: user.isVerified,
+      },
       token: accessToken,
       expiresIn: process.env.JWT_EXPIRES || "15m",
     });
