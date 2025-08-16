@@ -32,6 +32,19 @@ const validateTaskDueDate = () =>
     .isISO8601()
     .toDate()
     .withMessage("Invalid due date");
+const validateTaskTime = () =>
+  body("time")
+    .exists({ checkFalsy: true })
+    .withMessage("Task time is required")
+    .matches(/^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/)
+    .withMessage("Invalid time format (HH:mm)");
+
+const validateTaskCategory = () =>
+  body("category")
+    .optional()
+    .isString()
+    .trim()
+    .withMessage("Category must be a string");
 
 const validateMongoIdParam = (paramName = "id") =>
   param(paramName)
@@ -46,4 +59,6 @@ module.exports = {
   validateTaskStatus,
   validateTaskDueDate,
   validateMongoIdParam,
+  validateTaskTime,
+  validateTaskCategory,
 };

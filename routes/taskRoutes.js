@@ -4,6 +4,8 @@ const {
   validateTaskStatus,
   validateTaskDueDate,
   validateMongoIdParam,
+  validateTaskTime,
+  validateTaskCategory,
 } = require("../utils/validators");
 const {
   addTask,
@@ -19,7 +21,13 @@ router.use(authMiddleware);
 
 router.post(
   "/addtask",
-  [validateTaskTitle(), validateTaskStatus(), validateTaskDueDate()],
+  [
+    validateTaskTitle(),
+    validateTaskStatus(),
+    validateTaskDueDate(),
+    validateTaskTime(),
+    validateTaskCategory(),
+  ],
   addTask
 );
 router.get("/gettasks", getTasks);
@@ -30,6 +38,8 @@ router.put(
     validateTaskTitle(),
     validateTaskStatus(),
     validateTaskDueDate(),
+    validateTaskTime(),
+    validateTaskCategory(),
   ],
   updateTask
 );
