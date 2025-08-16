@@ -19,8 +19,8 @@ const TaskSchema = new mongoose.Schema(
       type: String,
       required: [true, "Task time is required"],
       match: [
-        /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/,
-        "Invalid time format (HH:mm)",
+        /^(0?[1-9]|1[0-2]):[0-5][0-9]\s?(AM|PM)$/i,
+        "Invalid time format (hh:mm AM/PM)",
       ],
     },
     category: {
