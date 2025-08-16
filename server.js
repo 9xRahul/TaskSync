@@ -9,7 +9,7 @@ const rateLimit = require("express-rate-limit");
 
 connectDB();
 
-const authRoutes = require("./routes/AuthRoutes");
+const authRoutes = require("./routes/authRoutes");
 const taskRoutes = require("./routes/taskRoutes");
 
 const app = express();
