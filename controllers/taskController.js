@@ -2,7 +2,7 @@ const Task = require("../models/Task");
 
 exports.addTask = async (req, res) => {
   try {
-    const { title, description, status, dueDate } = req.body;
+    const { title, description, status, dueDate, time, category } = req.body;
 
     // Ensure the authenticated user's ID is linked to the task
     const task = await Task.create({
@@ -10,6 +10,8 @@ exports.addTask = async (req, res) => {
       description,
       status,
       dueDate,
+      time,
+      category,
       owner: req.user.id, // Comes from authentication middleware
     });
 

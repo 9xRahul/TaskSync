@@ -14,6 +14,21 @@ const TaskSchema = new mongoose.Schema(
       trim: true,
       minlength: [3, "Task title must be at least 3 characters long"],
     },
+
+    time: {
+      type: String,
+      required: [true, "Task time is required"],
+      match: [
+        /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/,
+        "Invalid time format (HH:mm)",
+      ],
+    },
+    category: {
+      type: String,
+      trim: true,
+      default: null, // optional
+    },
+
     description: { type: String, trim: true, default: "" },
     status: {
       type: String,
