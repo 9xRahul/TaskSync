@@ -9,7 +9,6 @@ const {
   forgotPassword,
   resetPassword,
   verifyEmail,
-  
 } = require("../controllers/AuthControllers");
 
 const {
