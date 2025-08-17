@@ -46,6 +46,6 @@ router.put(
 );
 router.delete("/delete/:id", [validateMongoIdParam()], deleteTask);
 router.get("/gettask/:id", validateMongoIdParam(), getTaskById);
-router.get("/get-all-taks", validateMongoIdParam(), getTasksByOwnerId);
+router.get("/get-all-taks/:id", validateMongoIdParam(), getTasksByOwnerId);
 
 module.exports = router;
