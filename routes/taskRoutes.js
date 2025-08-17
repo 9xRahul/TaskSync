@@ -13,6 +13,7 @@ const {
   updateTask,
   deleteTask,
   getTaskById,
+  getTasksByOwnerId,
 } = require("../controllers/taskController");
 const { authMiddleware } = require("../middlewares/Auth");
 
@@ -45,5 +46,6 @@ router.put(
 );
 router.delete("/delete/:id", [validateMongoIdParam()], deleteTask);
 router.get("/gettask/:id", validateMongoIdParam(), getTaskById);
+router.get("/get-all-taks", validateMongoIdParam(), getTasksByOwnerId);
 
 module.exports = router;
