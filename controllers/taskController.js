@@ -50,6 +50,7 @@ exports.getTasksByOwnerId = async (req, res) => {
   try {
     const { ownerId } = req.params; // get ownerId from URL params
 
+    console.log("Owner ID:", ownerId); // Log the ownerId for debugging
     const tasks = await Task.find({ owner: ownerId }); // find all tasks with ownerId
 
     if (!tasks || tasks.length === 0) {
