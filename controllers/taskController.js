@@ -1,5 +1,5 @@
 const Task = require("../models/Task");
-
+const jwt = require("jsonwebtoken");
 exports.addTask = async (req, res) => {
   try {
     const { title, description, status, dueDate, time, category } = req.body;
@@ -57,19 +57,22 @@ exports.getTasksByOwnerId = async (req, res) => {
         .json({ success: false, error: "No token provided" });
     }
 
-    const token = authHeader.split(" ")[1];
+    let token = authHeader.split(" ")[1];
+    token = token.replace(/['"]+/g, ""); // remove quotes if accidentally added
+
+    console.log("Raw Token:", token);
 
     // Verify token
     let decoded;
     try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET); // decode with your secret
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+      console.log("Decoded payload:", decoded);
     } catch (err) {
-      return res.status(401).json({ success: false, error: "Invalid token" });
+      return res.status(401).json({ success: false, error: err.message });
     }
 
     // Take user id from token
     const ownerId = decoded.id;
-
     console.log("Owner ID from token:", ownerId);
 
     // Find tasks belonging to logged-in user
