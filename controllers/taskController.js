@@ -25,6 +25,7 @@ exports.addTask = async (req, res) => {
 exports.getTasks = async (req, res) => {
   try {
     const tasks = await Task.find().sort({ createdAt: -1 });
+
     res.status(200).json({ success: true, count: tasks.length, data: tasks });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
@@ -48,10 +49,31 @@ exports.getTaskById = async (req, res) => {
 //task bt owner id
 exports.getTasksByOwnerId = async (req, res) => {
   try {
-    const { ownerId } = req.params; // get ownerId from URL params
+    // Get token from headers
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res
+        .status(401)
+        .json({ success: false, error: "No token provided" });
+    }
 
-    console.log("Owner ID:", ownerId); // Log the ownerId for debugging
-    const tasks = await Task.find({ owner: ownerId }); // find all tasks with ownerId
+    const token = authHeader.split(" ")[1];
+
+    // Verify token
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET); // decode with your secret
+    } catch (err) {
+      return res.status(401).json({ success: false, error: "Invalid token" });
+    }
+
+    // Take user id from token
+    const ownerId = decoded.id;
+
+    console.log("Owner ID from token:", ownerId);
+
+    // Find tasks belonging to logged-in user
+    const tasks = await Task.find({ owner: ownerId }).sort({ createdAt: -1 });
 
     if (!tasks || tasks.length === 0) {
       return res
@@ -64,6 +86,7 @@ exports.getTasksByOwnerId = async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 };
+
 exports.getTasksByCategory = async (req, res) => {
   try {
     const { ownerId } = req.params; // get ownerId from URL params

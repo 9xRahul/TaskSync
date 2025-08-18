@@ -48,13 +48,9 @@ router.put(
 );
 router.delete("/delete/:id", [validateMongoIdParam()], deleteTask);
 router.get("/gettask/:id", validateMongoIdParam(), getTaskById);
-router.get("/get-all-taks/:ownerId", validateMongoIdParam(), getTasksByOwnerId);
+router.get("/get-all-taks", getTasksByOwnerId);
 
-router.get(
-  "/get-all-taks-by-category/:ownerId",
-  validateMongoIdParam(),
-  getTasksByCategory
-);
+router.get("/get-all-taks-by-category/:ownerId", getTasksByCategory);
 router.get(
   "/get-all-taks-by-status/:ownerId",
   validateMongoIdParam(),
