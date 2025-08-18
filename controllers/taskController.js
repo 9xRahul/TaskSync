@@ -84,7 +84,7 @@ exports.getTasksByOwnerId = async (req, res) => {
         .json({ success: false, error: "No tasks found for this owner" });
     }
 
-    return res.status(200).send(JSON.stringify({ success: true, data: tasks }));
+    return res.status(200).json({ success: true, data: tasks });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }
