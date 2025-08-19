@@ -51,6 +51,9 @@ exports.getTasksByOwnerId = async (req, res) => {
   try {
     // Get token from headers
     const authHeader = req.headers.authorization;
+
+    const { status, category } = req.body;
+
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res
         .status(401)
@@ -76,7 +79,18 @@ exports.getTasksByOwnerId = async (req, res) => {
     console.log("Owner ID from token:", ownerId);
 
     // Find tasks belonging to logged-in user
-    const tasks = await Task.find({ owner: ownerId }).sort({ createdAt: -1 });
+    if (category.toLowerCase() === "all") {
+      const tasks = await Task.find({
+        owner: ownerId,
+        status: status,
+      }).sort({ createdAt: -1 });
+    } else {
+      const tasks = await Task.find({
+        owner: ownerId,
+        status: status,
+        category: category.toLowerCase(),
+      }).sort({ createdAt: -1 });
+    }
 
     if (!tasks || tasks.length === 0) {
       return res
