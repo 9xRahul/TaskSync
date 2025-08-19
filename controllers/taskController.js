@@ -160,10 +160,11 @@ exports.updateTask = async (req, res) => {
         .json({ success: false, error: "You canot update this task" });
     }
 
-    const updatedTask = await Task.findByIdAndUpdate(id, req.body, {
-      new: true,
-      runValidators: true,
-    });
+    const updatedTask = await Task.findByIdAndUpdate(
+      id,
+      { $set: req.body }, // ensures only provided fields are updated
+      { new: true, runValidators: false } // skip required validators
+    );
 
     if (!updatedTask) {
       return res.status(404).json({ success: false, error: "Task not found" });

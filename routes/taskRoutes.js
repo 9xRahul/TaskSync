@@ -38,7 +38,6 @@ router.put(
   "/update/:id",
   [
     validateMongoIdParam(),
-    validateTaskTitle(),
     validateTaskStatus(),
     validateTaskDueDate(),
     validateTaskTime(),
