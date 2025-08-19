@@ -90,7 +90,7 @@ exports.getTasksByOwnerId = async (req, res) => {
       tasks = await Task.find({
         owner: ownerId,
         status: status,
-        category: category.toLowerCase(),
+        category: { $regex: `^${category}$`, $options: "i" },
       }).sort({ createdAt: -1 });
     }
 
