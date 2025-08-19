@@ -78,14 +78,16 @@ exports.getTasksByOwnerId = async (req, res) => {
     const ownerId = decoded.id;
     console.log("Owner ID from token:", ownerId);
 
+    var tasks = [];
+
     // Find tasks belonging to logged-in user
     if (category.toLowerCase() === "all") {
-      const tasks = await Task.find({
+      tasks = await Task.find({
         owner: ownerId,
         status: status,
       }).sort({ createdAt: -1 });
     } else {
-      const tasks = await Task.find({
+      tasks = await Task.find({
         owner: ownerId,
         status: status,
         category: category.toLowerCase(),
