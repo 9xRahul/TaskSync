@@ -52,7 +52,7 @@ exports.getTasksByOwnerId = async (req, res) => {
     // Get token from headers
     const authHeader = req.headers.authorization;
 
-    const { status, category } = req.body;
+    const { status, category } = req.query;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res
