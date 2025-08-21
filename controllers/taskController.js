@@ -2,7 +2,15 @@ const Task = require("../models/Task");
 const jwt = require("jsonwebtoken");
 exports.addTask = async (req, res) => {
   try {
-    const { title, description, status, dueDate, time, category } = req.body;
+    const {
+      title,
+      description,
+      status,
+      dueDate,
+      time,
+      category,
+      categoryIndex,
+    } = req.body;
 
     // Ensure the authenticated user's ID is linked to the task
     const task = await Task.create({
@@ -12,7 +20,9 @@ exports.addTask = async (req, res) => {
       dueDate,
       time,
       category,
-      owner: req.user.id, // Comes from authentication middleware
+      owner: req.user.id,
+      categoryIndex,
+      // Comes from authentication middleware
     });
 
     res.status(201).json({ success: true, data: task });
