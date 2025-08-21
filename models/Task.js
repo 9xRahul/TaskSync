@@ -29,7 +29,7 @@ const TaskSchema = new mongoose.Schema(
       default: null, // optional
     },
     categoryIndex: {
-      type: int,
+      type: integer,
       trim: true,
       default: 0,
     },
