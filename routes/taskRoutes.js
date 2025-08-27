@@ -16,6 +16,7 @@ const {
   getTasksByOwnerId,
   getTasksByCategory,
   getTasksByStatus,
+  searchTasks,
 } = require("../controllers/taskController");
 const { authMiddleware } = require("../middlewares/Auth");
 
