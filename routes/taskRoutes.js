@@ -55,4 +55,7 @@ router.get(
   validateMongoIdParam(),
   getTasksByStatus
 );
+
+router.get("/search", searchTasks);
+
 module.exports = router;

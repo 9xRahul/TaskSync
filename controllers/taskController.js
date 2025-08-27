@@ -214,3 +214,26 @@ exports.deleteTask = async (req, res) => {
     res.status(500).json({ success: false, error: error.message });
   }
 };
+
+
+exports.searchTasks = async (req, res) => {
+  try {
+    const query = req.query.q;
+    if (!query) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Search query is required" });
+    }
+
+    const tasks = await Task.find({
+      $or: [
+        { title: { $regex: query, $options: "i" } }, // case-insensitive search
+        { description: { $regex: query, $options: "i" } },
+      ],
+    });
+
+    res.json({ success: true, data: tasks });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
