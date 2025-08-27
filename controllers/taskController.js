@@ -219,6 +219,7 @@ exports.searchTasks = async (req, res) => {
   try {
     console.log(req.user);
     const query = req.query.q;
+    const status = req.query.status;
     if (!query) {
       return res
         .status(400)
@@ -227,6 +228,7 @@ exports.searchTasks = async (req, res) => {
 
     const tasks = await Task.find({
       owner: req.user.id,
+      status: status,
       $or: [
         { title: { $regex: query, $options: "i" } }, // case-insensitive search
         { description: { $regex: query, $options: "i" } },
