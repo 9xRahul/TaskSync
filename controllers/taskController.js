@@ -215,9 +215,9 @@ exports.deleteTask = async (req, res) => {
   }
 };
 
-
 exports.searchTasks = async (req, res) => {
   try {
+    console.log(req.user);
     const query = req.query.q;
     if (!query) {
       return res
@@ -226,6 +226,7 @@ exports.searchTasks = async (req, res) => {
     }
 
     const tasks = await Task.find({
+      owner: req.user.id,
       $or: [
         { title: { $regex: query, $options: "i" } }, // case-insensitive search
         { description: { $regex: query, $options: "i" } },
