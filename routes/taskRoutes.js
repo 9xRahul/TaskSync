@@ -14,7 +14,7 @@ const {
   deleteTask,
   getTaskById,
   getTasksByOwnerId,
-  getTasksByCategory,
+  getTasksAllTasksByUserId,
   getTasksByStatus,
   searchTasks,
 } = require("../controllers/taskController");
@@ -50,7 +50,7 @@ router.delete("/delete/:id", [validateMongoIdParam()], deleteTask);
 router.get("/gettask/:id", validateMongoIdParam(), getTaskById);
 router.post("/get-all-taks", getTasksByOwnerId);
 
-router.get("/get-all-taks-by-category/:ownerId", getTasksByCategory);
+router.get("/get-all-tasks-by-user/", getTasksAllTasksByUserId);
 router.get(
   "/get-all-taks-by-status/:ownerId",
   validateMongoIdParam(),

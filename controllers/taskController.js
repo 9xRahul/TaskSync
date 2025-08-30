@@ -116,14 +116,35 @@ exports.getTasksByOwnerId = async (req, res) => {
   }
 };
 
-exports.getTasksByCategory = async (req, res) => {
+exports.getTasksAllTasksByUserId = async (req, res) => {
   try {
-    const { ownerId } = req.params; // get ownerId from URL params
+    const authHeader = req.headers.authorization;
 
-    const { category } = req.body;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res
+        .status(401)
+        .json({ success: false, error: "No token provided" });
+    }
 
-    console.log("Owner ID:", ownerId); // Log the ownerId for debugging
-    const tasks = await Task.find({ owner: ownerId, category: category }); // find all tasks with ownerId
+    let token = authHeader.split(" ")[1];
+    token = token.replace(/['"]+/g, ""); // remove quotes if accidentally added
+
+    console.log("Raw Token:", token);
+
+    // Verify token
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+      console.log("Decoded payload:", decoded);
+    } catch (err) {
+      return res.status(401).json({ success: false, error: err.message });
+    }
+
+    // Take user id from token
+    const ownerId = decoded.id;
+    console.log("Owner ID from token:", ownerId);
+
+    const tasks = await Task.find({ owner: ownerId }); // find all tasks with ownerId
 
     if (!tasks || tasks.length === 0) {
       return res
