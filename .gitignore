@@ -95,3 +95,6 @@ public/
 
 # Optional stylelint cache
 .stylelintcache
+
+
+config/serviceAccountKey.json
