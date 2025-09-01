@@ -4,7 +4,7 @@ const User = require("../models/User");
 const RefreshToken = require("../models/RefreshToken");
 
 const cron = require("node-cron");
-const admin = require("./firebase");
+const admin = require("../utils/firebase");
 
 const {
   generateAccessToken,
