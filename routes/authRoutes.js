@@ -9,7 +9,7 @@ const {
   forgotPassword,
   resetPassword,
   verifyEmail,
-} = require("../controllers/AuthControllers");
+} = require("../controllers/authControllers");
 
 const {
   validateName,
