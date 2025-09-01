@@ -220,6 +220,13 @@ exports.logout = async (req, res) => {
   try {
     const cookieName = process.env.REFRESH_TOKEN_COOKIE_NAME || "refreshToken";
     const rawToken = req.cookies[cookieName] || req.body.refreshToken;
+
+    const { email } = req.body;
+    let user = await User.findOne({ email });
+    if (user) {
+      user.fcmTokens = user.fcmTokens.filter((token) => token !== fcmToken);
+      await user.save();
+    }
     if (!rawToken) {
       res.clearCookie(cookieName);
       return res.status(200).json({ success: true, message: "Logged out" });
@@ -235,13 +242,6 @@ exports.logout = async (req, res) => {
       await dbToken.save();
     }
     res.clearCookie(cookieName);
-
-    let user = await User.findOne({ email });
-
-    if (user) {
-      user.fcmTokens = user.fcmTokens.filter((token) => token !== fcmToken);
-      await user.save();
-    }
 
     res.status(200).json({ success: true, message: "Logged out" });
   } catch (err) {
