@@ -112,6 +112,7 @@ exports.login = async (req, res) => {
     return res.status(400).json({ success: false, errors: errors.array() });
 
   const { email, password, fcmToken } = req.body;
+  console.log(fcmToken);
   try {
     const user = await User.findOne({ email }).select("+password");
 
@@ -149,6 +150,7 @@ exports.login = async (req, res) => {
     // issue tokens
     if (!user.fcmTokens.includes(fcmToken)) {
       user.fcmTokens.push(fcmToken);
+      user.save();
     }
     const accessToken = generateAccessToken(user);
     const { rawToken, dbToken } = await createRefreshToken(user, req.ip);
