@@ -2,6 +2,10 @@ const crypto = require("crypto");
 const { validationResult } = require("express-validator");
 const User = require("../models/User");
 const RefreshToken = require("../models/RefreshToken");
+
+const cron = require("node-cron");
+const admin = require("./firebase");
+
 const {
   generateAccessToken,
   createRefreshToken,
@@ -107,7 +111,7 @@ exports.login = async (req, res) => {
   if (!errors.isEmpty())
     return res.status(400).json({ success: false, errors: errors.array() });
 
-  const { email, password } = req.body;
+  const { email, password, fcmToken } = req.body;
   try {
     const user = await User.findOne({ email }).select("+password");
 
@@ -143,6 +147,9 @@ exports.login = async (req, res) => {
     await user.resetLoginAttempts();
 
     // issue tokens
+    if (!user.fcmTokens.includes(fcmToken)) {
+      user.fcmTokens.push(fcmToken);
+    }
     const accessToken = generateAccessToken(user);
     const { rawToken, dbToken } = await createRefreshToken(user, req.ip);
     setRefreshTokenCookie(res, rawToken);
@@ -226,6 +233,14 @@ exports.logout = async (req, res) => {
       await dbToken.save();
     }
     res.clearCookie(cookieName);
+
+    let user = await User.findOne({ email });
+
+    if (user) {
+      user.fcmTokens = user.fcmTokens.filter((token) => token !== fcmToken);
+      await user.save();
+    }
+
     res.status(200).json({ success: true, message: "Logged out" });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

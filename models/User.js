@@ -14,7 +14,7 @@ const UserSchema = new mongoose.Schema(
       match: [/\S+@\S+\.\S+/, "Invalid email"],
     },
     password: { type: String, required: true, minlength: 6, select: false },
-
+    fcmTokens: [String],
     // verification & password reset
     isVerified: { type: Boolean, default: false },
     verificationToken: { type: String }, // stored hashed

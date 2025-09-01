@@ -6,6 +6,7 @@ const connectDB = require("./config/db");
 const helmet = require("helmet");
 const cookieParser = require("cookie-parser");
 const rateLimit = require("express-rate-limit");
+const startTaskReminderJob = require("./jobs/taskReminderJob");
 
 connectDB();
 
@@ -15,6 +16,8 @@ const taskRoutes = require("./routes/taskRoutes");
 const app = express();
 
 app.set("trust proxy", 1); // 1 means trust the first proxy
+
+startTaskReminderJob();
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
