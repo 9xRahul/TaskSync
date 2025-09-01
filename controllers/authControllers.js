@@ -222,11 +222,8 @@ exports.logout = async (req, res) => {
     const rawToken = req.cookies[cookieName] || req.body.refreshToken;
 
     const { email } = req.body;
-    let user = await User.findOne({ email });
-    if (user) {
-      user.fcmTokens = user.fcmTokens.filter((token) => token !== fcmToken);
-      await user.save();
-    }
+    await User.updateOne({ email }, { $pull: { fcmTokens: fcmToken } });
+    
     if (!rawToken) {
       res.clearCookie(cookieName);
       return res.status(200).json({ success: true, message: "Logged out" });
