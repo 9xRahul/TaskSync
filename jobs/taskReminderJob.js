@@ -7,12 +7,11 @@ const Task = require("../models/Task");
 function combineDateAndTime(dueDate, timeString) {
   if (!dueDate || !timeString) return null;
 
-  // Force parse only the date part (YYYY-MM-DD), ignore timezone
-  const [year, month, day] = new Date(dueDate)
-    .toISOString()
-    .split("T")[0]
-    .split("-")
-    .map(Number);
+  // ✅ Extract local date parts (not UTC!)
+  const due = new Date(dueDate);
+  const year = due.getFullYear();
+  const month = due.getMonth(); // already 0-based
+  const day = due.getDate();
 
   let hours = 0,
     minutes = 0;
@@ -28,11 +27,11 @@ function combineDateAndTime(dueDate, timeString) {
     if (modifier.toLowerCase() === "pm" && hours < 12) hours += 12;
     if (modifier.toLowerCase() === "am" && hours === 12) hours = 0;
   } else {
-    // "HH:mm" 24hr
+    // "HH:mm" (24hr)
     [hours, minutes] = timeString.split(":").map(Number);
   }
 
-  return new Date(year, month - 1, day, hours, minutes || 0, 0, 0);
+  return new Date(year, month, day, hours, minutes || 0, 0, 0);
 }
 
 function startTaskReminderJob() {
