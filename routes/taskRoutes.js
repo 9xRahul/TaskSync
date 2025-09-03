@@ -59,9 +59,6 @@ router.get(
 
 router.get("/search", searchTasks);
 
-router.get("/", (req, res) => {
-  console.log("Server is active");
-  res.send("✅ Server is alive");
-});
+
 
 module.exports = router;

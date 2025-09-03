@@ -10,6 +10,11 @@ const startTaskReminderJob = require("./jobs/taskReminderJob");
 
 connectDB();
 
+app.get("/", (req, res) => {
+  console.log("Server is active");
+  res.send("✅ Server is alive");
+});
+
 const authRoutes = require("./routes/authRoutes");
 const taskRoutes = require("./routes/taskRoutes");
 
@@ -31,7 +36,6 @@ app.use(cookieParser());
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/tasks", taskRoutes);
-
 
 app.use((err, req, res, next) => {
   console.error(err.stack);
