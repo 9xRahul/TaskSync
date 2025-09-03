@@ -83,18 +83,15 @@ async function sendNotification(task, title, body) {
         JSON.stringify(response, null, 2)
       );
 
-      const failedTokens = [];
+      // ❌ Do NOT remove failed tokens here
+      // Just log failures for debugging/monitoring
       response.responses.forEach((resp, idx) => {
-        if (!resp.success) failedTokens.push(user.fcmTokens[idx]);
+        if (!resp.success) {
+          console.warn(
+            `⚠️ Failed to send to token: ${user.fcmTokens[idx]} - ${resp.error?.message}`
+          );
+        }
       });
-
-      if (failedTokens.length > 0) {
-        user.fcmTokens = user.fcmTokens.filter(
-          (token) => !failedTokens.includes(token)
-        );
-        await user.save();
-        console.log("🧹 Cleaned invalid tokens for:", user._id);
-      }
     } catch (err) {
       console.error("❌ Error sending notification", err);
     }
