@@ -1,15 +1,16 @@
+// jobs/taskReminderJob.js
 const cron = require("node-cron");
 const admin = require("../utils/firebase");
 const Task = require("../models/Task");
 
-// ✅ Combine dueDate (string/Date) + time (string like "10:30 AM" or "14:00")
+// ✅ Parse dueDate + time as IST
 function combineDateAndTime(dueDate, timeString) {
   if (!dueDate || !timeString) return null;
 
-  let year, month, day;
+  let [year, month, day] = [0, 0, 0];
 
   if (typeof dueDate === "string") {
-    // format "YYYY-MM-DD"
+    // "YYYY-MM-DD"
     [year, month, day] = dueDate.split("-").map(Number);
   } else if (dueDate instanceof Date) {
     year = dueDate.getFullYear();
@@ -26,23 +27,21 @@ function combineDateAndTime(dueDate, timeString) {
     timeString.toLowerCase().includes("am") ||
     timeString.toLowerCase().includes("pm")
   ) {
-    // "h:mm AM/PM"
     const [time, modifier] = timeString.split(" ");
     [hours, minutes] = time.split(":").map(Number);
 
     if (modifier.toLowerCase() === "pm" && hours < 12) hours += 12;
     if (modifier.toLowerCase() === "am" && hours === 12) hours = 0;
   } else {
-    // "HH:mm" 24hr
     [hours, minutes] = timeString.split(":").map(Number);
   }
 
-  // 🚀 IMPORTANT: don't add offset manually, keep Date() as is (UTC internally)
-  return new Date(year, month - 1, day, hours, minutes || 0, 0);
+  // ✅ Create a UTC date, then shift to IST explicitly
+  const utcDate = new Date(Date.UTC(year, month - 1, day, hours, minutes || 0));
+  return utcDate;
 }
 
 function startTaskReminderJob() {
-  // run every minute
   cron.schedule("* * * * *", async () => {
     const now = new Date();
 
