@@ -27,7 +27,8 @@ function startTaskReminderJob() {
 
     const now = new Date();
 
-    const tasks = await Task.find({ status: "pending" }).populate("userId");
+    // ✅ Populate owner instead of userId
+    const tasks = await Task.find({ status: "pending" }).populate("owner");
 
     for (const task of tasks) {
       if (!task.dueDate) continue;
@@ -60,7 +61,7 @@ function startTaskReminderJob() {
 }
 
 async function sendNotification(task, title, body) {
-  const user = task.userId;
+  const user = task.owner; // ✅ use owner instead of userId
   if (user && user.fcmTokens && user.fcmTokens.length > 0) {
     const message = {
       notification: { title, body },
