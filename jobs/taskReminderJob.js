@@ -86,7 +86,6 @@ function startTaskReminderJob() {
     }
   });
 }
-
 async function sendNotification(task, title, body) {
   const user = task.owner;
 
@@ -99,10 +98,23 @@ async function sendNotification(task, title, body) {
     try {
       const response = await admin.messaging().sendMulticast(message);
 
+      console.log("🔔 FCM Response:", JSON.stringify(response, null, 2));
+
+      // ✅ Check if *any* success
+      const successCount = response.responses.filter((r) => r.success).length;
+      const failCount = response.responses.filter((r) => !r.success).length;
+
+      console.log(
+        `📨 Task "${task.title}" → Success: ${successCount}, Failures: ${failCount}`
+      );
+
       // ✅ Remove invalid tokens
       const failedTokens = [];
       response.responses.forEach((resp, idx) => {
-        if (!resp.success) failedTokens.push(user.fcmTokens[idx]);
+        if (!resp.success) {
+          console.error("❌ Token failed:", user.fcmTokens[idx], resp.error);
+          failedTokens.push(user.fcmTokens[idx]);
+        }
       });
 
       if (failedTokens.length > 0) {
@@ -112,10 +124,8 @@ async function sendNotification(task, title, body) {
         await user.save();
         console.log("🧹 Cleaned invalid tokens for user:", user._id);
       }
-
-      console.log(`📨 Notification sent for task "${task.title}"`);
     } catch (err) {
-      console.error("❌ Error sending notification", err);
+      console.error("❌ Error sending notification:", err);
     }
   } else {
     console.log(`⚠️ No FCM tokens for user of task "${task.title}"`);
