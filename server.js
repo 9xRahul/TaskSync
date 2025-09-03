@@ -15,14 +15,9 @@ const taskRoutes = require("./routes/taskRoutes");
 
 const app = express();
 
-app.get("/", (req, res) => {
+app.all("/", (req, res) => {
   console.log("Server is active");
   res.send("✅ Server is alive");
-});
-
-// 🔥 Also handle HEAD requests
-app.head("/", (req, res) => {
-  res.sendStatus(200);
 });
 
 app.set("trust proxy", 1); // 1 means trust the first proxy
