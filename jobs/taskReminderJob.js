@@ -13,20 +13,25 @@ function combineDateAndTime(date, timeString) {
     timeString.toLowerCase().includes("am") ||
     timeString.toLowerCase().includes("pm")
   ) {
-    // 12-hour format with AM/PM
     const [time, modifier] = timeString.split(" ");
     [hours, minutes] = time.split(":").map(Number);
 
     if (modifier.toLowerCase() === "pm" && hours < 12) hours += 12;
     if (modifier.toLowerCase() === "am" && hours === 12) hours = 0;
   } else {
-    // 24-hour format
     [hours, minutes] = timeString.split(":").map(Number);
   }
 
-  const combined = new Date(date);
-  combined.setHours(hours, minutes || 0, 0, 0);
-  return combined;
+  const d = new Date(date); // base date
+  return new Date(
+    d.getFullYear(),
+    d.getMonth(),
+    d.getDate(),
+    hours,
+    minutes || 0,
+    0,
+    0
+  ); // ✅ always in local time
 }
 
 function startTaskReminderJob() {
