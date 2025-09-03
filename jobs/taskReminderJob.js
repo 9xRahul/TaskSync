@@ -2,8 +2,6 @@
 const cron = require("node-cron");
 const admin = require("../utils/firebase");
 const Task = require("../models/Task");
-
-// ✅ Helper: parse "HH:mm" (24h) OR "h:mm AM/PM" into Date object
 function combineDateAndTime(date, timeString) {
   if (!timeString) return null;
 
@@ -22,7 +20,9 @@ function combineDateAndTime(date, timeString) {
     [hours, minutes] = timeString.split(":").map(Number);
   }
 
-  const d = new Date(date); // base date
+  const d = new Date(date);
+
+  // ✅ use only Y/M/D in local timezone, ignore UTC conversion
   return new Date(
     d.getFullYear(),
     d.getMonth(),
@@ -31,7 +31,7 @@ function combineDateAndTime(date, timeString) {
     minutes || 0,
     0,
     0
-  ); // ✅ always in local time
+  );
 }
 
 function startTaskReminderJob() {
