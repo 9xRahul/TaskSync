@@ -10,15 +10,15 @@ const startTaskReminderJob = require("./jobs/taskReminderJob");
 
 connectDB();
 
-app.get("/", (req, res) => {
-  console.log("Server is active");
-  res.send("✅ Server is alive");
-});
-
 const authRoutes = require("./routes/authRoutes");
 const taskRoutes = require("./routes/taskRoutes");
 
 const app = express();
+
+app.get("/", (req, res) => {
+  console.log("Server is active");
+  res.send("✅ Server is alive");
+});
 
 app.set("trust proxy", 1); // 1 means trust the first proxy
 
