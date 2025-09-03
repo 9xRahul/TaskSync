@@ -1,20 +1,29 @@
-// jobs/taskReminderJob.js
 const cron = require("node-cron");
 const admin = require("../utils/firebase");
 const Task = require("../models/Task");
+
+//
+// ✅ Helper: Convert UTC date → IST (UTC+5:30)
+//
+function toIST(date) {
+  return new Date(date.getTime() + 5.5 * 60 * 60 * 1000);
+}
+
+//
+// ✅ Helper: Combine dueDate (string/Date) + time string into IST Date
+//
 function combineDateAndTime(dueDate, timeString) {
   if (!dueDate || !timeString) return null;
 
   let year, month, day;
 
   if (typeof dueDate === "string") {
-    // If it's a string "2025-09-03"
+    // Assume format "YYYY-MM-DD"
     [year, month, day] = dueDate.split("-").map(Number);
   } else if (dueDate instanceof Date) {
-    // If it's a real Date object
-    year = dueDate.getFullYear();
-    month = dueDate.getMonth() + 1; // JS months are 0-based
-    day = dueDate.getDate();
+    year = dueDate.getUTCFullYear();
+    month = dueDate.getUTCMonth() + 1;
+    day = dueDate.getUTCDate();
   } else {
     return null;
   }
@@ -33,23 +42,30 @@ function combineDateAndTime(dueDate, timeString) {
     if (modifier.toLowerCase() === "pm" && hours < 12) hours += 12;
     if (modifier.toLowerCase() === "am" && hours === 12) hours = 0;
   } else {
-    // "HH:mm"
+    // "HH:mm" 24hr
     [hours, minutes] = timeString.split(":").map(Number);
   }
 
-  // ✅ Build IST datetime correctly
-  const utcDate = new Date(Date.UTC(year, month - 1, day, hours, minutes || 0));
-  return new Date(utcDate.getTime() - 5.5 * 60 * 60 * 1000); // shift UTC → IST
+  // Build UTC date first
+  const utcDate = new Date(
+    Date.UTC(year, month - 1, day, hours, minutes || 0, 0)
+  );
+
+  // Convert UTC → IST
+  return toIST(utcDate);
 }
 
+//
+// ✅ Main cron job
+//
 function startTaskReminderJob() {
   // run every minute
   cron.schedule("* * * * *", async () => {
     console.log("⏰ Checking tasks for reminders...");
 
-    const now = new Date();
+    const now = toIST(new Date()); // always IST
 
-    // fetch all pending tasks
+    // fetch all pending tasks with user info
     const tasks = await Task.find({ status: "pending" }).populate("owner");
 
     for (const task of tasks) {
@@ -61,14 +77,16 @@ function startTaskReminderJob() {
       const diffMs = dueDateTime - now;
       const diffMins = Math.floor(diffMs / 60000);
 
-      // Debug log always
+      // Debug log
       console.log(
-        `🔎 Task "${
-          task.title
-        }" | Due: ${dueDateTime.toLocaleString()} | Now: ${now.toLocaleString()} | diff: ${diffMins} mins`
+        `🔎 Task "${task.title}" | Due: ${dueDateTime.toLocaleString("en-IN", {
+          timeZone: "Asia/Kolkata",
+        })} | Now: ${now.toLocaleString("en-IN", {
+          timeZone: "Asia/Kolkata",
+        })} | diff: ${diffMins} mins`
       );
 
-      // 🔔 Trigger notifications
+      // ✅ Send 2 hours before
       if (diffMins === 120) {
         await sendNotification(
           task,
@@ -77,6 +95,7 @@ function startTaskReminderJob() {
         );
       }
 
+      // ✅ Send at exact due time
       if (diffMins === 0) {
         await sendNotification(
           task,
@@ -88,6 +107,9 @@ function startTaskReminderJob() {
   });
 }
 
+//
+// ✅ Send notification
+//
 async function sendNotification(task, title, body) {
   const user = task.owner;
 
@@ -105,7 +127,7 @@ async function sendNotification(task, title, body) {
         JSON.stringify(response, null, 2)
       );
 
-      // Remove invalid tokens
+      // remove invalid tokens
       const failedTokens = [];
       response.responses.forEach((resp, idx) => {
         if (!resp.success) failedTokens.push(user.fcmTokens[idx]);
