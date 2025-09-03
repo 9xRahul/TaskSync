@@ -17,8 +17,6 @@ const app = express();
 
 app.set("trust proxy", 1); // 1 means trust the first proxy
 
-
-
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
@@ -40,8 +38,7 @@ app.use((err, req, res, next) => {
 });
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () {
-
+app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   startTaskReminderJob();
 });
