@@ -5,8 +5,19 @@ const Task = require("../models/Task");
 function combineDateAndTime(dueDate, timeString) {
   if (!dueDate || !timeString) return null;
 
-  // Parse date parts manually instead of using new Date(dueDate)
-  const [year, month, day] = dueDate.split("-").map(Number); // "2025-09-03"
+  let year, month, day;
+
+  if (typeof dueDate === "string") {
+    // If it's a string "2025-09-03"
+    [year, month, day] = dueDate.split("-").map(Number);
+  } else if (dueDate instanceof Date) {
+    // If it's a real Date object
+    year = dueDate.getFullYear();
+    month = dueDate.getMonth() + 1; // JS months are 0-based
+    day = dueDate.getDate();
+  } else {
+    return null;
+  }
 
   let hours = 0,
     minutes = 0;
@@ -15,19 +26,20 @@ function combineDateAndTime(dueDate, timeString) {
     timeString.toLowerCase().includes("am") ||
     timeString.toLowerCase().includes("pm")
   ) {
+    // "h:mm AM/PM"
     const [time, modifier] = timeString.split(" ");
     [hours, minutes] = time.split(":").map(Number);
 
     if (modifier.toLowerCase() === "pm" && hours < 12) hours += 12;
     if (modifier.toLowerCase() === "am" && hours === 12) hours = 0;
   } else {
+    // "HH:mm"
     [hours, minutes] = timeString.split(":").map(Number);
   }
 
-  // ✅ Build date in Asia/Kolkata timezone manually
+  // ✅ Build IST datetime correctly
   const utcDate = new Date(Date.UTC(year, month - 1, day, hours, minutes || 0));
-  // Shift UTC → IST (+5:30)
-  return new Date(utcDate.getTime() - 5.5 * 60 * 60 * 1000);
+  return new Date(utcDate.getTime() - 5.5 * 60 * 60 * 1000); // shift UTC → IST
 }
 
 function startTaskReminderJob() {
