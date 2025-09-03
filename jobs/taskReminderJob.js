@@ -2,11 +2,14 @@
 const cron = require("node-cron");
 const admin = require("../utils/firebase");
 const Task = require("../models/Task");
-function combineDateAndTime(date, timeString) {
+
+function combineDateAndTime(dueDate, timeString) {
   if (!timeString) return null;
 
-  let hours, minutes;
+  let hours = 0,
+    minutes = 0;
 
+  // Parse time string (handles "HH:mm" or "h:mm AM/PM")
   if (
     timeString.toLowerCase().includes("am") ||
     timeString.toLowerCase().includes("pm")
@@ -20,18 +23,14 @@ function combineDateAndTime(date, timeString) {
     [hours, minutes] = timeString.split(":").map(Number);
   }
 
-  const d = new Date(date);
+  // ✅ Extract only Y/M/D from dueDate (ignore timezone)
+  const d = new Date(dueDate);
+  const year = d.getUTCFullYear();
+  const month = d.getUTCMonth(); // careful: UTC month
+  const day = d.getUTCDate();
 
-  // ✅ use only Y/M/D in local timezone, ignore UTC conversion
-  return new Date(
-    d.getFullYear(),
-    d.getMonth(),
-    d.getDate(),
-    hours,
-    minutes || 0,
-    0,
-    0
-  );
+  // ✅ Build new Date in server’s local TZ but with correct Y/M/D
+  return new Date(year, month, day, hours, minutes || 0, 0, 0);
 }
 
 function startTaskReminderJob() {
