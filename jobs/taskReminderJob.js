@@ -2,28 +2,19 @@ const cron = require("node-cron");
 const admin = require("../utils/firebase");
 const Task = require("../models/Task");
 
-//
-// ✅ Helper: Convert UTC date → IST (UTC+5:30)
-//
-function toIST(date) {
-  return new Date(date.getTime() + 5.5 * 60 * 60 * 1000);
-}
-
-//
-// ✅ Helper: Combine dueDate (string/Date) + time string into IST Date
-//
+// ✅ Combine dueDate (string/Date) + time (string like "10:30 AM" or "14:00")
 function combineDateAndTime(dueDate, timeString) {
   if (!dueDate || !timeString) return null;
 
   let year, month, day;
 
   if (typeof dueDate === "string") {
-    // Assume format "YYYY-MM-DD"
+    // format "YYYY-MM-DD"
     [year, month, day] = dueDate.split("-").map(Number);
   } else if (dueDate instanceof Date) {
-    year = dueDate.getUTCFullYear();
-    month = dueDate.getUTCMonth() + 1;
-    day = dueDate.getUTCDate();
+    year = dueDate.getFullYear();
+    month = dueDate.getMonth() + 1;
+    day = dueDate.getDate();
   } else {
     return null;
   }
@@ -46,26 +37,21 @@ function combineDateAndTime(dueDate, timeString) {
     [hours, minutes] = timeString.split(":").map(Number);
   }
 
-  // Build UTC date first
-  const utcDate = new Date(
-    Date.UTC(year, month - 1, day, hours, minutes || 0, 0)
-  );
-
-  // Convert UTC → IST
-  return toIST(utcDate);
+  // 🚀 IMPORTANT: don't add offset manually, keep Date() as is (UTC internally)
+  return new Date(year, month - 1, day, hours, minutes || 0, 0);
 }
 
-//
-// ✅ Main cron job
-//
 function startTaskReminderJob() {
   // run every minute
   cron.schedule("* * * * *", async () => {
-    console.log("⏰ Checking tasks for reminders...");
+    const now = new Date();
 
-    const now = toIST(new Date()); // always IST
+    console.log(
+      `⏰ Checking tasks at: ${now.toLocaleString("en-IN", {
+        timeZone: "Asia/Kolkata",
+      })} (IST)`
+    );
 
-    // fetch all pending tasks with user info
     const tasks = await Task.find({ status: "pending" }).populate("owner");
 
     for (const task of tasks) {
@@ -74,10 +60,9 @@ function startTaskReminderJob() {
       const dueDateTime = combineDateAndTime(task.dueDate, task.time);
       if (!dueDateTime) continue;
 
-      const diffMs = dueDateTime - now;
+      const diffMs = dueDateTime.getTime() - now.getTime();
       const diffMins = Math.floor(diffMs / 60000);
 
-      // Debug log
       console.log(
         `🔎 Task "${task.title}" | Due: ${dueDateTime.toLocaleString("en-IN", {
           timeZone: "Asia/Kolkata",
@@ -86,7 +71,7 @@ function startTaskReminderJob() {
         })} | diff: ${diffMins} mins`
       );
 
-      // ✅ Send 2 hours before
+      // 🔔 Notifications
       if (diffMins === 120) {
         await sendNotification(
           task,
@@ -95,7 +80,6 @@ function startTaskReminderJob() {
         );
       }
 
-      // ✅ Send at exact due time
       if (diffMins === 0) {
         await sendNotification(
           task,
@@ -107,9 +91,6 @@ function startTaskReminderJob() {
   });
 }
 
-//
-// ✅ Send notification
-//
 async function sendNotification(task, title, body) {
   const user = task.owner;
 
@@ -127,7 +108,6 @@ async function sendNotification(task, title, body) {
         JSON.stringify(response, null, 2)
       );
 
-      // remove invalid tokens
       const failedTokens = [];
       response.responses.forEach((resp, idx) => {
         if (!resp.success) failedTokens.push(user.fcmTokens[idx]);
