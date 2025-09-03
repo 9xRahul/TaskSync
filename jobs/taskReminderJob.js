@@ -2,31 +2,36 @@
 const cron = require("node-cron");
 const admin = require("../utils/firebase");
 const Task = require("../models/Task");
+
+// ✅ Combine dueDate (string from DB) + time (string like "10:30 AM" or "14:00")
 function combineDateAndTime(dueDate, timeString) {
   if (!dueDate || !timeString) return null;
 
-  // 🔹 Ensure we only take the YYYY-MM-DD part (ignores timezone shifts)
-  const dateOnly = new Date(dueDate).toISOString().split("T")[0]; // e.g. "2025-09-03"
-  const [year, month, day] = dateOnly.split("-").map(Number);
+  // Force parse only the date part (YYYY-MM-DD), ignore timezone
+  const [year, month, day] = new Date(dueDate)
+    .toISOString()
+    .split("T")[0]
+    .split("-")
+    .map(Number);
 
   let hours = 0,
     minutes = 0;
 
-  // 🔹 Parse time (supports "HH:mm" and "h:mm AM/PM")
   if (
     timeString.toLowerCase().includes("am") ||
     timeString.toLowerCase().includes("pm")
   ) {
+    // "h:mm AM/PM"
     const [time, modifier] = timeString.split(" ");
     [hours, minutes] = time.split(":").map(Number);
 
     if (modifier.toLowerCase() === "pm" && hours < 12) hours += 12;
     if (modifier.toLowerCase() === "am" && hours === 12) hours = 0;
   } else {
+    // "HH:mm" 24hr
     [hours, minutes] = timeString.split(":").map(Number);
   }
 
-  // ✅ Build new Date (local time, no timezone shift)
   return new Date(year, month - 1, day, hours, minutes || 0, 0, 0);
 }
 
@@ -37,7 +42,7 @@ function startTaskReminderJob() {
 
     const now = new Date();
 
-    // ✅ Get all pending tasks & populate owner (user)
+    // fetch all pending tasks
     const tasks = await Task.find({ status: "pending" }).populate("owner");
 
     for (const task of tasks) {
@@ -49,14 +54,14 @@ function startTaskReminderJob() {
       const diffMs = dueDateTime - now;
       const diffMins = Math.floor(diffMs / 60000);
 
-      // Debug log
+      // Debug log always
       console.log(
         `🔎 Task "${
           task.title
-        }" due at ${dueDateTime.toLocaleString()} | diff ${diffMins} mins`
+        }" | Due: ${dueDateTime.toLocaleString()} | Now: ${now.toLocaleString()} | diff: ${diffMins} mins`
       );
 
-      // ✅ Notify 2 hours before
+      // 🔔 Trigger notifications
       if (diffMins === 120) {
         await sendNotification(
           task,
@@ -65,7 +70,6 @@ function startTaskReminderJob() {
         );
       }
 
-      // ✅ Notify exactly at due time
       if (diffMins === 0) {
         await sendNotification(
           task,
@@ -73,25 +77,12 @@ function startTaskReminderJob() {
           `Your task "${task.title}" is due now!`
         );
       }
-
-      // ✅ (Optional) If you want: notify when within 2 minutes (instead of exact match)
-      if (diffMins >= 0 && diffMins <= 2) {
-        await sendNotification(
-          task,
-          "⏰ Task Due Soon",
-          `Your task "${task.title}" is due at ${
-            task.time
-          } (${dueDateTime.toLocaleString()})`
-        );
-      }
     }
   });
 }
+
 async function sendNotification(task, title, body) {
   const user = task.owner;
-
-  console.log("👤 User:", user?._id);
-  console.log("📱 Tokens:", user?.fcmTokens);
 
   if (user && user.fcmTokens && user.fcmTokens.length > 0) {
     const message = {
@@ -99,26 +90,18 @@ async function sendNotification(task, title, body) {
       tokens: user.fcmTokens,
     };
 
-    console.log("🚀 Sending message:", message);
-
     try {
       const response = await admin.messaging().sendMulticast(message);
-      console.log("🔔 FCM Response:", JSON.stringify(response, null, 2));
-
-      const successCount = response.responses.filter((r) => r.success).length;
-      const failCount = response.responses.filter((r) => !r.success).length;
 
       console.log(
-        `📨 Task "${task.title}" → Success: ${successCount}, Failures: ${failCount}`
+        `🔔 FCM Response for task "${task.title}":`,
+        JSON.stringify(response, null, 2)
       );
 
-      // cleanup
+      // Remove invalid tokens
       const failedTokens = [];
       response.responses.forEach((resp, idx) => {
-        if (!resp.success) {
-          console.error("❌ Token failed:", user.fcmTokens[idx], resp.error);
-          failedTokens.push(user.fcmTokens[idx]);
-        }
+        if (!resp.success) failedTokens.push(user.fcmTokens[idx]);
       });
 
       if (failedTokens.length > 0) {
@@ -126,10 +109,10 @@ async function sendNotification(task, title, body) {
           (token) => !failedTokens.includes(token)
         );
         await user.save();
-        console.log("🧹 Cleaned invalid tokens for user:", user._id);
+        console.log("🧹 Removed invalid tokens for user:", user._id);
       }
     } catch (err) {
-      console.error("❌ Error sending notification:", err);
+      console.error("❌ Error sending notification", err);
     }
   } else {
     console.log(`⚠️ No FCM tokens for user of task "${task.title}"`);
