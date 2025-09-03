@@ -2,54 +2,34 @@
 const cron = require("node-cron");
 const admin = require("../utils/firebase");
 const Task = require("../models/Task");
+const moment = require("moment-timezone");
 
-// ✅ Parse dueDate + time as IST
+// ✅ Combine dueDate (date) + time (string) in IST
 function combineDateAndTime(dueDate, timeString) {
   if (!dueDate || !timeString) return null;
 
-  let [year, month, day] = [0, 0, 0];
+  const datePart = moment(dueDate).format("YYYY-MM-DD"); // force to date only
+  const dateTimeStr = `${datePart} ${timeString}`;
 
-  if (typeof dueDate === "string") {
-    // "YYYY-MM-DD"
-    [year, month, day] = dueDate.split("-").map(Number);
-  } else if (dueDate instanceof Date) {
-    year = dueDate.getFullYear();
-    month = dueDate.getMonth() + 1;
-    day = dueDate.getDate();
-  } else {
-    return null;
-  }
-
-  let hours = 0,
-    minutes = 0;
-
+  // Try parse "YYYY-MM-DD HH:mm" or "YYYY-MM-DD h:mm A"
+  let m;
   if (
     timeString.toLowerCase().includes("am") ||
     timeString.toLowerCase().includes("pm")
   ) {
-    const [time, modifier] = timeString.split(" ");
-    [hours, minutes] = time.split(":").map(Number);
-
-    if (modifier.toLowerCase() === "pm" && hours < 12) hours += 12;
-    if (modifier.toLowerCase() === "am" && hours === 12) hours = 0;
+    m = moment.tz(dateTimeStr, "YYYY-MM-DD h:mm A", "Asia/Kolkata");
   } else {
-    [hours, minutes] = timeString.split(":").map(Number);
+    m = moment.tz(dateTimeStr, "YYYY-MM-DD HH:mm", "Asia/Kolkata");
   }
 
-  // ✅ Create a UTC date, then shift to IST explicitly
-  const utcDate = new Date(Date.UTC(year, month - 1, day, hours, minutes || 0));
-  return utcDate;
+  return m.isValid() ? m : null;
 }
 
 function startTaskReminderJob() {
   cron.schedule("* * * * *", async () => {
-    const now = new Date();
+    const now = moment.tz("Asia/Kolkata");
 
-    console.log(
-      `⏰ Checking tasks at: ${now.toLocaleString("en-IN", {
-        timeZone: "Asia/Kolkata",
-      })} (IST)`
-    );
+    console.log(`⏰ Checking at IST: ${now.format("YYYY-MM-DD HH:mm:ss")}`);
 
     const tasks = await Task.find({ status: "pending" }).populate("owner");
 
@@ -59,18 +39,14 @@ function startTaskReminderJob() {
       const dueDateTime = combineDateAndTime(task.dueDate, task.time);
       if (!dueDateTime) continue;
 
-      const diffMs = dueDateTime.getTime() - now.getTime();
-      const diffMins = Math.floor(diffMs / 60000);
+      const diffMins = dueDateTime.diff(now, "minutes");
 
       console.log(
-        `🔎 Task "${task.title}" | Due: ${dueDateTime.toLocaleString("en-IN", {
-          timeZone: "Asia/Kolkata",
-        })} | Now: ${now.toLocaleString("en-IN", {
-          timeZone: "Asia/Kolkata",
-        })} | diff: ${diffMins} mins`
+        `🔎 Task "${task.title}" | Due: ${dueDateTime.format(
+          "YYYY-MM-DD hh:mm A"
+        )} | Now: ${now.format("YYYY-MM-DD hh:mm A")} | diff: ${diffMins} mins`
       );
 
-      // 🔔 Notifications
       if (diffMins === 120) {
         await sendNotification(
           task,
@@ -101,9 +77,8 @@ async function sendNotification(task, title, body) {
 
     try {
       const response = await admin.messaging().sendMulticast(message);
-
       console.log(
-        `🔔 FCM Response for task "${task.title}":`,
+        `🔔 FCM Response for "${task.title}":`,
         JSON.stringify(response, null, 2)
       );
 
@@ -117,13 +92,13 @@ async function sendNotification(task, title, body) {
           (token) => !failedTokens.includes(token)
         );
         await user.save();
-        console.log("🧹 Removed invalid tokens for user:", user._id);
+        console.log("🧹 Cleaned invalid tokens for:", user._id);
       }
     } catch (err) {
       console.error("❌ Error sending notification", err);
     }
   } else {
-    console.log(`⚠️ No FCM tokens for user of task "${task.title}"`);
+    console.log(`⚠️ No FCM tokens for "${task.title}"`);
   }
 }
 
