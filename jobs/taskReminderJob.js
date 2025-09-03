@@ -2,16 +2,11 @@
 const cron = require("node-cron");
 const admin = require("../utils/firebase");
 const Task = require("../models/Task");
-
-// ✅ Combine dueDate (string from DB) + time (string like "10:30 AM" or "14:00")
 function combineDateAndTime(dueDate, timeString) {
   if (!dueDate || !timeString) return null;
 
-  // ✅ Extract local date parts (not UTC!)
-  const due = new Date(dueDate);
-  const year = due.getFullYear();
-  const month = due.getMonth(); // already 0-based
-  const day = due.getDate();
+  // Parse date parts manually instead of using new Date(dueDate)
+  const [year, month, day] = dueDate.split("-").map(Number); // "2025-09-03"
 
   let hours = 0,
     minutes = 0;
@@ -20,18 +15,19 @@ function combineDateAndTime(dueDate, timeString) {
     timeString.toLowerCase().includes("am") ||
     timeString.toLowerCase().includes("pm")
   ) {
-    // "h:mm AM/PM"
     const [time, modifier] = timeString.split(" ");
     [hours, minutes] = time.split(":").map(Number);
 
     if (modifier.toLowerCase() === "pm" && hours < 12) hours += 12;
     if (modifier.toLowerCase() === "am" && hours === 12) hours = 0;
   } else {
-    // "HH:mm" (24hr)
     [hours, minutes] = timeString.split(":").map(Number);
   }
 
-  return new Date(year, month, day, hours, minutes || 0, 0, 0);
+  // ✅ Build date in Asia/Kolkata timezone manually
+  const utcDate = new Date(Date.UTC(year, month - 1, day, hours, minutes || 0));
+  // Shift UTC → IST (+5:30)
+  return new Date(utcDate.getTime() - 5.5 * 60 * 60 * 1000);
 }
 
 function startTaskReminderJob() {
