@@ -89,18 +89,21 @@ function startTaskReminderJob() {
 async function sendNotification(task, title, body) {
   const user = task.owner;
 
+  console.log("👤 User:", user?._id);
+  console.log("📱 Tokens:", user?.fcmTokens);
+
   if (user && user.fcmTokens && user.fcmTokens.length > 0) {
     const message = {
       notification: { title, body },
       tokens: user.fcmTokens,
     };
 
+    console.log("🚀 Sending message:", message);
+
     try {
       const response = await admin.messaging().sendMulticast(message);
-
       console.log("🔔 FCM Response:", JSON.stringify(response, null, 2));
 
-      // ✅ Check if *any* success
       const successCount = response.responses.filter((r) => r.success).length;
       const failCount = response.responses.filter((r) => !r.success).length;
 
@@ -108,7 +111,7 @@ async function sendNotification(task, title, body) {
         `📨 Task "${task.title}" → Success: ${successCount}, Failures: ${failCount}`
       );
 
-      // ✅ Remove invalid tokens
+      // cleanup
       const failedTokens = [];
       response.responses.forEach((resp, idx) => {
         if (!resp.success) {
