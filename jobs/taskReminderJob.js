@@ -65,7 +65,6 @@ function startTaskReminderJob() {
     }
   });
 }
-
 async function sendNotification(task, title, body) {
   const user = task.owner;
 
@@ -76,7 +75,9 @@ async function sendNotification(task, title, body) {
     };
 
     try {
-      const response = await admin.messaging().sendMulticast(message);
+      // ✅ Use sendEachForMulticast for firebase-admin >= v11
+      const response = await admin.messaging().sendEachForMulticast(message);
+
       console.log(
         `🔔 FCM Response for "${task.title}":`,
         JSON.stringify(response, null, 2)
